@@ -1,0 +1,39 @@
+[commit]
+	gpgsign = true
+[gpg]
+	program = gpg
+[init]
+	defaultBranch = main
+
+[push]
+	autoSetupRemote = true
+	default = current
+
+[alias]
+	undo = reset --soft HEAD^
+	staash = stash -all
+
+[core]
+	pager = delta
+
+[delta]
+	navigate = true
+	side-by-side = true
+
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[user]
+	name = William Zeng
+	email = 61915438+willzeng274@users.noreply.github.com
+	signingKey = B60FEBF7CD46682E
+[merge]
+	tool = nvimdiff3
+[rerere]
+	enabled = true
+[column]
+	ui = auto
+[branch]
+	sort = -committerdate

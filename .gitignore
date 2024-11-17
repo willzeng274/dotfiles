@@ -1,0 +1,22 @@
+# Could just force-add these files and leave this as '*', but this way I have a
+# nice explicit list for documentation's sake.
+
+# Ignore everything by default.
+*
+
+# very important
+!.gitignore
+!.zshrc
+!.zsh_plugins.txt
+!.gitconfig
+!.wezterm.lua
+!.clangd
+
+!.config/
+!.gnupg/
+
+!.config/kitty/
+!.gnupg/gpg-agent.conf
+!.gnupg/common.conf
+
+!.config/kitty/**
