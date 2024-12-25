@@ -63,7 +63,7 @@ rangercd() {
 alias ranger="rangercd"
 
 useless() {
-    echo "mvf mvp venv cpy mkdircd pastefile resume resume_ rangercd watch_resume termpdf"
+    echo "mvf mvp venv cpy mkdircd pastefile resume resume_ rangercd watch_resume termpdf ff"
     echo "howdoi eza ranger htop btop tty-clock bat delta fuck tldr"
     echo "dotacat lolcat sl hollywood cowsay cowthink fortune asciiquarium cmatrix nethack chara say ponysay starwars aafire rig cbonsai cava gti"
     echo "cowsay -f"
@@ -87,13 +87,22 @@ venv() {
     source venv/bin/activate
 }
 
+ff() {
+    aerospace list-windows --all | fzf --bind 'enter:execute(bash -c "aerospace focus --window-id {1}")+abort'
+}
+
 # useless but in case I forget pbcopy exists
 cpy() {
     xargs | pbcopy
 }
 
 mkdircd() {
-    mkdir -p "$1" && cd $1
+    if [ -d "$1" ]; then
+        echo "Directory '$1' already exists."
+        cd "$1" || return
+    else
+        mkdir -p "$1" && cd "$1" || return
+    fi
 }
 
 pastefile() {
@@ -129,20 +138,26 @@ export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${
 
 # -- Use fd instead of fzf --
 
-export FZF_DEFAULT_COMMAND="fd --hidden --strip-cwd-prefix --exclude .git"
+# export FZF_DEFAULT_COMMAND="fd --hidden --strip-cwd-prefix --exclude .git"
+# export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+# export FZF_ALT_C_COMMAND="fd --type=d --hidden --strip-cwd-prefix --exclude .git"
+
+export FZF_DEFAULT_COMMAND="fd --hidden --no-ignore --strip-cwd-prefix --exclude .git --max-depth 3"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-export FZF_ALT_C_COMMAND="fd --type=d --hidden --strip-cwd-prefix --exclude .git"
+export FZF_ALT_C_COMMAND="fd --type=d --hidden --no-ignore --strip-cwd-prefix --exclude .git --max-depth 3"
 
 # Use fd (https://github.com/sharkdp/fd) for listing path candidates.
 # - The first argument to the function ($1) is the base path to start traversal
 # - See the source code (completion.{bash,zsh}) for the details.
 _fzf_compgen_path() {
-  fd --hidden --exclude .git . "$1"
+  # fd --hidden --exclude .git . "$1"
+  fd --hidden --no-ignore --exclude .git --max-depth 3 . "$1"
 }
 
 # Use fd to generate the list for directory completion
 _fzf_compgen_dir() {
-  fd --type=d --hidden --exclude .git . "$1"
+  # fd --type=d --hidden --exclude .git . "$1"
+  fd --type=d --hidden --no-ignore --exclude .git --max-depth 3 . "$1"
 }
 
 source ~/fzf-git.sh/fzf-git.sh
@@ -193,6 +208,7 @@ export GPG_TTY=$TTY
 alias skim='/Applications/Skim.app/Contents/MacOS/Skim'
 alias termpdf="python /Users/user/Desktop/Projects/termpdf.py/termpdf.py"
 alias ls="eza --color=always --long --git --no-filesize --icons=always --no-time --no-user --no-permissions"
+alias la="eza --color=always --long --git --no-filesize --icons=always --no-time --no-user --no-permissions --all"
 
 watch_resume() {
     local file="$1"
@@ -200,7 +216,7 @@ watch_resume() {
     # If no argument is passed, check the current directory for PDF files
     if [[ -z "$file" ]]; then
         # Find PDF files in the current directory (non-recursive)
-        pdf_files=($(ls *.pdf 2>/dev/null))
+        pdf_files=($(find . -maxdepth 1 -type f -iname "*.pdf"))
 
         # If no PDF files are found, show a usage message
         if (( ${#pdf_files[@]} == 0 )); then
