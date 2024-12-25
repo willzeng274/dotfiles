@@ -22,6 +22,18 @@ zsh_plugins=${ZDOTDIR:-~}/.zsh_plugins
 # Lazy-load antidote from its functions directory.
 fpath=(~/.antidote/functions $fpath)
 autoload -Uz antidote
+autoload -Uz add-zsh-hook
+
+AUTO_UPDATE_TAB_TITLE=true
+
+init() {
+    if [[ "$AUTO_UPDATE_TAB_TITLE" == true ]]; then
+        echo -ne "\033]0;${PWD/#$HOME/~}\a"
+    fi
+}
+
+add-zsh-hook chpwd init
+init
 
 # Generate a new static file whenever .zsh_plugins.txt is updated.
 if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
@@ -40,8 +52,30 @@ resume_() {
 
 resume() {
     folder_name=$(basename "$PWD")
-    cp ~/Desktop/resumes/loo/new/resume_general.tex ./resume_"$folder_name".tex
-    nvim resume_"$folder_name".tex
+    target_file="./resume_${folder_name}.tex"
+
+    if [ -f "$target_file" ]; then
+        echo "File $target_file already exists. Do you want to overwrite it? (y/n): "
+        read choice
+        case "$choice" in
+            [Yy]* )
+                echo "Overwriting file..."
+                cp ~/Desktop/resumes/loo/new/resume_general.tex "$target_file"
+                nvim "$target_file"
+                ;;
+            [Nn]* )
+                echo "Exiting without making changes."
+                return 1
+                ;;
+            * )
+                echo "Invalid input. Exiting."
+                return 1
+                ;;
+        esac
+    else
+        cp ~/Desktop/resumes/loo/new/resume_general.tex "$target_file"
+        nvim "$target_file"
+    fi
 }
 
 rangercd() {
@@ -61,6 +95,17 @@ rangercd() {
 }
 
 alias ranger="rangercd"
+
+title() {
+    if [[ -n "$1" ]]; then
+        echo -ne "\033]0;$1\a"
+        AUTO_UPDATE_TAB_TITLE=false  # Disable auto-updates
+    else
+        # If no argument, restore automatic updates and use the current directory
+        AUTO_UPDATE_TAB_TITLE=true
+        echo -ne "\033]0;${PWD/#$HOME/~}\a"
+    fi
+}
 
 useless() {
     echo "mvf mvp venv cpy mkdircd pastefile resume resume_ rangercd watch_resume termpdf ff"
