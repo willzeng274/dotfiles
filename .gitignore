@@ -16,7 +16,9 @@
 !.gnupg/
 
 !.config/kitty/
+!.config/aerospace/
 !.gnupg/gpg-agent.conf
 !.gnupg/common.conf
 
 !.config/kitty/**
+!.config/aerospace/**
