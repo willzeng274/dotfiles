@@ -1,2 +1,9 @@
 CompileFlags:
+    Add:
+        - -isystem
+        - /opt/homebrew/Cellar/gcc/14.2.0_1/include/c++/14
+        - -isystem
+        - /opt/homebrew/Cellar/gcc/14.2.0_1/include/c++/14/aarch64-apple-darwin24
+        - -isystem
+        - /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include
     Remove: -f*

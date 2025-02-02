@@ -1,4 +1,11 @@
 
+HISTFILE=~/.zsh_history
+
+HISTSIZE=10000
+
+SAVEHIST=10000
+
+setopt EXTENDED_HISTORY
 
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
@@ -6,6 +13,9 @@
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
@@ -234,9 +244,6 @@ _fzf_comprun() {
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
@@ -254,6 +261,8 @@ alias skim='/Applications/Skim.app/Contents/MacOS/Skim'
 alias termpdf="python /Users/user/Desktop/Projects/termpdf.py/termpdf.py"
 alias ls="eza --color=always --long --git --no-filesize --icons=always --no-time --no-user --no-permissions"
 alias la="eza --color=always --long --git --no-filesize --icons=always --no-time --no-user --no-permissions --all"
+alias python="python3"
+alias pip="pip3"
 
 watch_resume() {
     local file="$1"
@@ -303,4 +312,5 @@ unset __conda_setup
 # <<< conda initialize <<<
 
 
-
+. "$HOME/.atuin/bin/env"
+eval "$(atuin init zsh)"

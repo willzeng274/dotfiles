@@ -193,6 +193,8 @@ alt-shift-semicolon = 'mode service'
 
 alt-shift-m = '''exec-and-forget kitty -d ~ --title "floating-kitty" --override initial_window_width=100c --override initial_window_height=50c'''
 
+cmd-tab = 'exec-and-forget kitty -d ~ --title "floating-kitty" --override initial_window_width=100c --override initial_window_height=50c'
+
 # 'service' binding mode declaration.
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
 [mode.service.binding]
@@ -210,6 +212,7 @@ alt-shift-k = ['join-with up', 'mode main']
 alt-shift-l = ['join-with right', 'mode main']
 
 
+
 [[on-window-detected]]
 if.app-id = 'com.google.Chrome'
 if.window-title-regex-substring = 'Picture in Picture'
@@ -217,22 +220,18 @@ run = 'layout floating'
 check-further-callbacks = true
 
 [[on-window-detected]]
-# if.app-name-regex-substring = 'finder'
 if.app-id = 'com.apple.finder'
 run = 'layout floating'
 
 [[on-window-detected]]
-# if.app-name-regex-substring = 'Discord'
 if.app-id = 'com.discord'
 run = 'move-node-to-workspace D'
 
 [[on-window-detected]]
-# if.app-name-regex-substring = 'Notion'
 if.app-id = 'notion.id'
 run = 'move-node-to-workspace U'
 
 [[on-window-detected]]
-# if.app-name-regex-substring = 'Outlook'
 if.app-id = 'com.microsoft.Outlook'
 run = 'move-node-to-workspace X'
 
@@ -241,3 +240,13 @@ run = 'move-node-to-workspace X'
 if.app-id = 'net.kovidgoyal.kitty'
 if.window-title-regex-substring = 'floating-kitty'
 run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.apple.iCal'
+run = 'layout floating'
+
+[[on-window-detected]]
+# chatgpt
+if.app-id = 'com.openai.chat'
+run = 'move-node-to-workspace V'
+
