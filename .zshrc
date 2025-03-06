@@ -1,4 +1,3 @@
-
 HISTFILE=~/.zsh_history
 
 HISTSIZE=10000
@@ -18,9 +17,6 @@ fi
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-
-eval "$(/opt/homebrew/bin/brew shellenv)"
-
 # ${ZDOTDIR:-~}/.zshrc
 
 # Set the root name of the plugins files (.txt and .zsh) antidote will use.
@@ -53,6 +49,8 @@ fi
 # Source your static plugins file.
 source ${zsh_plugins}.zsh
 
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 resume_() {
     folder_name=$(basename "$PWD")
     cp ~/Desktop/resumes/loo/new/resume_general.tex ./resume_"$folder_name".tex
@@ -83,7 +81,7 @@ resume() {
                 ;;
         esac
     else
-        cp ~/Desktop/resumes/loo/new/resume_general.tex "$target_file"
+        cp ~/Desktop/resumes/templates/general/resume_general.tex "$target_file"
         nvim "$target_file"
     fi
 }
@@ -261,6 +259,7 @@ alias skim='/Applications/Skim.app/Contents/MacOS/Skim'
 alias termpdf="python /Users/user/Desktop/Projects/termpdf.py/termpdf.py"
 alias ls="eza --color=always --long --git --no-filesize --icons=always --no-time --no-user --no-permissions"
 alias la="eza --color=always --long --git --no-filesize --icons=always --no-time --no-user --no-permissions --all"
+alias lsd="eza --color=always --long --git --no-filesize --icons=always --sort=newest --no-user --no-permissions"
 alias python="python3"
 alias pip="pip3"
 
@@ -290,27 +289,33 @@ watch_resume() {
     # If we get here, `file` is set to the selected PDF file.
     # echo "Using file: $file"
     while true; do
-        echo "$file" | entr -d python /Users/user/Desktop/Projects/termpdf.py/termpdf.py "$file"
+        echo "$file" | entr -d python3 /Users/user/Desktop/Projects/termpdf.py/termpdf.py "$file"
     done
 }
 
 eval $(thefuck --alias)
 
+export JAVA_HOME="/opt/homebrew/opt/openjdk"
+export PATH="$JAVA_HOME/bin:$PATH"
+
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/opt/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/opt/anaconda3/etc/profile.d/conda.sh" ]; then
-        . "/opt/anaconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/opt/anaconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
+# __conda_setup="$('/opt/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+# if [ $? -eq 0 ]; then
+#     eval "$__conda_setup"
+# else
+#     if [ -f "/opt/anaconda3/etc/profile.d/conda.sh" ]; then
+#         . "/opt/anaconda3/etc/profile.d/conda.sh"
+#     else
+#         export PATH="/opt/anaconda3/bin:$PATH"
+#     fi
+# fi
+# unset __conda_setup
 # <<< conda initialize <<<
 
 
 . "$HOME/.atuin/bin/env"
 eval "$(atuin init zsh)"
+
+# Added by Windsurf
+export PATH="/Users/user/.codeium/windsurf/bin:$PATH"
