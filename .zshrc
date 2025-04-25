@@ -16,6 +16,25 @@ cyan="#2CF9ED"
 
 export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${bg_highlight},hl+:${purple},info:${blue},prompt:${cyan},pointer:${cyan},marker:${cyan},spinner:${cyan},header:${cyan}"
 
+# Set the root name of the plugins files (.txt and .zsh) antidote will use.
+zsh_plugins=${ZDOTDIR:-~}/.zsh_plugins
+
+# Ensure the .zsh_plugins.txt file exists so you can add plugins.
+[[ -f ${zsh_plugins}.txt ]] || touch ${zsh_plugins}.txt
+
+# Lazy-load antidote from its functions directory.
+fpath=(~/.antidote/functions $fpath)
+autoload -Uz antidote
+autoload -Uz add-zsh-hook
+
+# Generate a new static file whenever .zsh_plugins.txt is updated.
+if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
+  antidote bundle <${zsh_plugins}.txt >|${zsh_plugins}.zsh
+fi
+
+# Source your static plugins file - MOVED BEFORE Powerlevel10k for color initialization
+source ${zsh_plugins}.zsh
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -29,17 +48,6 @@ fi
 # test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 # ${ZDOTDIR:-~}/.zshrc
 
-# Set the root name of the plugins files (.txt and .zsh) antidote will use.
-zsh_plugins=${ZDOTDIR:-~}/.zsh_plugins
-
-# Ensure the .zsh_plugins.txt file exists so you can add plugins.
-[[ -f ${zsh_plugins}.txt ]] || touch ${zsh_plugins}.txt
-
-# Lazy-load antidote from its functions directory.
-fpath=(~/.antidote/functions $fpath)
-autoload -Uz antidote
-autoload -Uz add-zsh-hook
-
 AUTO_UPDATE_TAB_TITLE=true
 
 init() {
@@ -50,14 +58,6 @@ init() {
 
 add-zsh-hook chpwd init
 init
-
-# Generate a new static file whenever .zsh_plugins.txt is updated.
-if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
-  antidote bundle <${zsh_plugins}.txt >|${zsh_plugins}.zsh
-fi
-
-# Source your static plugins file.
-source ${zsh_plugins}.zsh
 
 # Defer Homebrew setup if already configured
 if ! command -v brew &> /dev/null; then
@@ -192,16 +192,6 @@ eval "$(fzf --zsh)"
 # **<Tab> to use fzf on most commands for parameters, except git
 # git documentation is on their github
 
-# --- setup fzf theme --- (theme defined at top of file for faster loading)
-# fg="#CBE0F0"
-# bg="#011628"
-# bg_highlight="#143652"
-# purple="#B388FF"
-# blue="#06BCE4"
-# cyan="#2CF9ED"
-
-# export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${bg_highlight},hl+:${purple},info:${blue},prompt:${cyan},pointer:${cyan},marker:${cyan},spinner:${cyan},header:${cyan}"
-
 # -- Use fd instead of fzf --
 
 # export FZF_DEFAULT_COMMAND="fd --hidden --strip-cwd-prefix --exclude .git"
@@ -248,12 +238,25 @@ _fzf_comprun() {
   esac
 }
 
-# bun completions
-[ -s "/Users/user/.bun/_bun" ] && source "/Users/user/.bun/_bun"
-
-# bun
+# bun completions - lazy loaded
 export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
+
+# Function to lazy load bun
+_load_bun() {
+  # Source bun completions
+  [ -s "$BUN_INSTALL/_bun" ] && source "$BUN_INSTALL/_bun"
+  
+  # Add bun to PATH
+  export PATH="$BUN_INSTALL/bin:$PATH"
+  
+  # Remove aliases to avoid recursion
+  unalias bun bunx 2>/dev/null
+}
+
+# Alias bun commands to lazy load
+alias bun='_load_bun && bun "$@"'
+alias bunx='_load_bun && bunx "$@"'
+
 
 # Load nvm lazily
 export NVM_DIR="$HOME/.nvm"
@@ -273,6 +276,7 @@ alias node='_load_nvm && node "$@"'
 alias npm='_load_nvm && npm "$@"'
 
 eval "$(zoxide init zsh)"
+
 export PATH="/opt/homebrew/opt/gcc/bin:$PATH"
 export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
 export PATH="$HOME/.gem/bin:$PATH"
@@ -320,7 +324,22 @@ watch_resume() {
     done
 }
 
-eval $(thefuck --alias)
+fuck () {
+    TF_PYTHONIOENCODING=$PYTHONIOENCODING;
+    export TF_SHELL=zsh;
+    export TF_ALIAS=fuck;
+    TF_SHELL_ALIASES=$(alias);
+    export TF_SHELL_ALIASES;
+    TF_HISTORY="$(fc -ln -10)";
+    export TF_HISTORY;
+    export PYTHONIOENCODING=utf-8;
+    TF_CMD=$(
+        thefuck THEFUCK_ARGUMENT_PLACEHOLDER $@
+    ) && eval $TF_CMD;
+    unset TF_HISTORY;
+    export PYTHONIOENCODING=$TF_PYTHONIOENCODING;
+    test -n "$TF_CMD" && print -s $TF_CMD
+}
 
 export JAVA_HOME="/opt/homebrew/opt/openjdk"
 export PATH="$JAVA_HOME/bin:$PATH"
@@ -347,9 +366,27 @@ eval "$(atuin init zsh)"
 
 # Added by Windsurf
 export PATH="/Users/user/.codeium/windsurf/bin:$PATH"
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/user/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/user/google-cloud-sdk/path.zsh.inc'; fi
 
-# The next line enables shell command completion for gcloud.
-if [ -f '/Users/user/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/user/google-cloud-sdk/completion.zsh.inc'; fi
+# Lazy-load Google Cloud SDK
+# The paths to Google Cloud SDK initialization files
+gcloud_path_zsh_inc='/Users/user/google-cloud-sdk/path.zsh.inc'
+gcloud_completion_zsh_inc='/Users/user/google-cloud-sdk/completion.zsh.inc'
 
+# Function to load Google Cloud SDK
+_load_gcloud() {
+  # Load Google Cloud SDK paths and completions
+  if [[ -f "$gcloud_path_zsh_inc" ]]; then
+    source "$gcloud_path_zsh_inc"
+  fi
+  if [[ -f "$gcloud_completion_zsh_inc" ]]; then
+    source "$gcloud_completion_zsh_inc"
+  fi
+  
+  # Remove aliases to avoid recursion
+  unalias gcloud gsutil bq 2>/dev/null
+}
+
+# Create aliases for common Google Cloud commands
+alias gcloud='_load_gcloud && gcloud "$@"'
+alias gsutil='_load_gcloud && gsutil "$@"'
+alias bq='_load_gcloud && bq "$@"'
