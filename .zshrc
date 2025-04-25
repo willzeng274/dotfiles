@@ -6,6 +6,16 @@ SAVEHIST=10000
 
 setopt EXTENDED_HISTORY
 
+# --- setup fzf theme - moved here for faster color initialization ---
+fg="#CBE0F0"
+bg="#011628"
+bg_highlight="#143652"
+purple="#B388FF"
+blue="#06BCE4"
+cyan="#2CF9ED"
+
+export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${bg_highlight},hl+:${purple},info:${blue},prompt:${cyan},pointer:${cyan},marker:${cyan},spinner:${cyan},header:${cyan}"
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -49,7 +59,10 @@ fi
 # Source your static plugins file.
 source ${zsh_plugins}.zsh
 
-eval "$(/opt/homebrew/bin/brew shellenv)"
+# Defer Homebrew setup if already configured
+if ! command -v brew &> /dev/null; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
 
 resume_() {
     folder_name=$(basename "$PWD")
@@ -179,15 +192,15 @@ eval "$(fzf --zsh)"
 # **<Tab> to use fzf on most commands for parameters, except git
 # git documentation is on their github
 
-# --- setup fzf theme ---
-fg="#CBE0F0"
-bg="#011628"
-bg_highlight="#143652"
-purple="#B388FF"
-blue="#06BCE4"
-cyan="#2CF9ED"
+# --- setup fzf theme --- (theme defined at top of file for faster loading)
+# fg="#CBE0F0"
+# bg="#011628"
+# bg_highlight="#143652"
+# purple="#B388FF"
+# blue="#06BCE4"
+# cyan="#2CF9ED"
 
-export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${bg_highlight},hl+:${purple},info:${blue},prompt:${cyan},pointer:${cyan},marker:${cyan},spinner:${cyan},header:${cyan}"
+# export FZF_DEFAULT_OPTS="--color=fg:${fg},bg:${bg},hl:${purple},fg+:${fg},bg+:${bg_highlight},hl+:${purple},info:${blue},prompt:${cyan},pointer:${cyan},marker:${cyan},spinner:${cyan},header:${cyan}"
 
 # -- Use fd instead of fzf --
 
@@ -242,9 +255,22 @@ _fzf_comprun() {
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
+# Load nvm lazily
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+_load_nvm() {
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+  # Unalias nvm and node/npm if they exist to avoid recursion
+  unalias nvm 2>/dev/null
+  unalias node 2>/dev/null
+  unalias npm 2>/dev/null
+  # Add nvm's detected Node version to the PATH
+  export PATH="$NVM_BIN:$PATH"
+}
+# Alias nvm, node, npm to load nvm first time they are called
+alias nvm='_load_nvm && nvm "$@"'
+alias node='_load_nvm && node "$@"'
+alias npm='_load_nvm && npm "$@"'
 
 eval "$(zoxide init zsh)"
 export PATH="/opt/homebrew/opt/gcc/bin:$PATH"
@@ -262,6 +288,7 @@ alias la="eza --color=always --long --git --no-filesize --icons=always --no-time
 alias lsd="eza --color=always --long --git --no-filesize --icons=always --sort=newest --no-user --no-permissions"
 alias python="python3"
 alias pip="pip3"
+alias quartus="wine /Users/user/.wine/drive_c/intelFPGA_lite/18.1/quartus/bin64/quartus.exe"
 
 watch_resume() {
     local file="$1"
@@ -300,22 +327,29 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-# __conda_setup="$('/opt/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-# if [ $? -eq 0 ]; then
-#     eval "$__conda_setup"
-# else
-#     if [ -f "/opt/anaconda3/etc/profile.d/conda.sh" ]; then
-#         . "/opt/anaconda3/etc/profile.d/conda.sh"
-#     else
-#         export PATH="/opt/anaconda3/bin:$PATH"
-#     fi
-# fi
-# unset __conda_setup
+# The initialization is commented out for performance
+# Run 'condainit' command to initialize conda when needed
 # <<< conda initialize <<<
 
+# Define condainit function to load conda only when needed
+condainit() {
+  if [ -f "/opt/anaconda3/etc/profile.d/conda.sh" ]; then
+    . "/opt/anaconda3/etc/profile.d/conda.sh"
+    echo "Conda initialized successfully. Now you can use 'conda activate <env>'."
+  else
+    echo "Could not find conda.sh. Please check your Anaconda installation."
+    return 1
+  fi
+}
 
 . "$HOME/.atuin/bin/env"
 eval "$(atuin init zsh)"
 
 # Added by Windsurf
 export PATH="/Users/user/.codeium/windsurf/bin:$PATH"
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/user/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/user/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/user/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/user/google-cloud-sdk/completion.zsh.inc'; fi
+

@@ -120,11 +120,12 @@ alt-2 = 'workspace 2'
 alt-3 = 'workspace 3'
 alt-4 = 'workspace 4'
 alt-5 = 'workspace 5'
-alt-6 = 'workspace 6'
+alt-6 = 'workspace 6' # 6-0 are for Monitor 2
 alt-7 = 'workspace 7'
 alt-8 = 'workspace 8'
-alt-9 = 'workspace 9'	# Garbage
-alt-a = 'workspace A' # In your config, you can drop workspace bindings that you don't need
+alt-9 = 'workspace 9'
+alt-0 = 'workspace 0'
+# alt-a = 'workspace A' # Commented out because option-a is used for aerospace workspace search
 alt-b = 'workspace B'
 # alt-c = 'workspace C' # Commented out because option-c is used for chatgpt
 alt-d = 'workspace D'
@@ -133,7 +134,7 @@ alt-d = 'workspace D'
 # alt-g = 'workspace G' # Not decided yet, but option-g is used for chrome tab search
 alt-i = 'workspace I'
 # alt-m = 'workspace M'	# Used for aerospace workspace search
-# alt-n = 'workspace N'	# Not decided yet, new chrome tab hotkey
+# alt-n = 'workspace N'	# New chrome tab hotkey
 alt-o = 'workspace O'
 alt-p = 'workspace P'
 alt-q = 'workspace Q'
@@ -157,7 +158,8 @@ alt-shift-6 = 'move-node-to-workspace 6'
 alt-shift-7 = 'move-node-to-workspace 7'
 alt-shift-8 = 'move-node-to-workspace 8'
 alt-shift-9 = 'move-node-to-workspace 9'
-alt-shift-a = 'move-node-to-workspace A'
+alt-shift-0 = 'move-node-to-workspace 0'
+# alt-shift-a = 'move-node-to-workspace A' # Inaccessible
 alt-shift-b = 'move-node-to-workspace B'
 # alt-shift-c = 'move-node-to-workspace C'	# Inaccessible
 alt-shift-d = 'move-node-to-workspace D'
@@ -184,9 +186,11 @@ alt-shift-z = 'move-node-to-workspace Z'
 alt-shift-f = 'fullscreen'	# Because alt-f is used for finding
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
-alt-tab = 'workspace-back-and-forth'
+# alt-tab = 'workspace-back-and-forth'
+alt-a = 'workspace-back-and-forth'
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-workspace-to-monitor
-alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
+# alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
+alt-shift-a = 'move-workspace-to-monitor --wrap-around next'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#mode
 alt-shift-semicolon = 'mode service'
@@ -211,7 +215,17 @@ alt-shift-j = ['join-with down', 'mode main']
 alt-shift-k = ['join-with up', 'mode main']
 alt-shift-l = ['join-with right', 'mode main']
 
-
+[workspace-to-monitor-force-assignment]
+1 = 'main'
+2 = 'main'
+3 = 'main'
+4 = 'main'
+5 = 'main'
+6 = ['secondary', 'main']
+7 = ['secondary', 'main']
+8 = ['secondary', 'main']
+9 = ['secondary', 'main']
+0 = ['secondary', 'main']
 
 [[on-window-detected]]
 if.app-id = 'com.google.Chrome'
@@ -245,8 +259,9 @@ run = 'layout floating'
 if.app-id = 'com.apple.iCal'
 run = 'layout floating'
 
-[[on-window-detected]]
-# chatgpt
-if.app-id = 'com.openai.chat'
-run = 'move-node-to-workspace V'
+# removed because the alt+c window is getting moved to V as well
+# [[on-window-detected]]
+# # chatgpt
+# if.app-id = 'com.openai.chat'
+# run = 'move-node-to-workspace V'
 
