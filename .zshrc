@@ -26,6 +26,7 @@ zsh_plugins=${ZDOTDIR:-~}/.zsh_plugins
 fpath=(~/.antidote/functions $fpath)
 autoload -Uz antidote
 autoload -Uz add-zsh-hook
+autoload -Uz compinit && compinit
 
 # Generate a new static file whenever .zsh_plugins.txt is updated.
 if [[ ! ${zsh_plugins}.zsh -nt ${zsh_plugins}.txt ]]; then
@@ -254,9 +255,19 @@ _load_bun() {
 }
 
 # Alias bun commands to lazy load
-alias bun='_load_bun && bun "$@"'
-alias bunx='_load_bun && bunx "$@"'
+bun() {
+    _load_bun
+    command bun "$@"
+}
 
+bunx() {
+    _load_bun
+    command bunx "$@"
+}
+
+
+# Load nvm lazily
+export NVM_DIR="$HOME/.nvm"
 
 # Load nvm lazily
 export NVM_DIR="$HOME/.nvm"
@@ -270,10 +281,22 @@ _load_nvm() {
   # Add nvm's detected Node version to the PATH
   export PATH="$NVM_BIN:$PATH"
 }
-# Alias nvm, node, npm to load nvm first time they are called
-alias nvm='_load_nvm && nvm "$@"'
-alias node='_load_nvm && node "$@"'
-alias npm='_load_nvm && npm "$@"'
+
+# Create function wrappers instead of simple aliases to properly handle arguments
+nvm() {
+  _load_nvm
+  command nvm "$@"
+}
+
+node() {
+  _load_nvm
+  command node "$@"
+}
+
+npm() {
+  _load_nvm
+  command npm "$@"
+}
 
 eval "$(zoxide init zsh)"
 
@@ -390,3 +413,4 @@ _load_gcloud() {
 alias gcloud='_load_gcloud && gcloud "$@"'
 alias gsutil='_load_gcloud && gsutil "$@"'
 alias bq='_load_gcloud && bq "$@"'
+eval "$(/Users/user/.local/bin/mise activate zsh)"

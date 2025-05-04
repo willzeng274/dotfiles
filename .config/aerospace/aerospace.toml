@@ -197,8 +197,6 @@ alt-shift-semicolon = 'mode service'
 
 alt-shift-m = '''exec-and-forget kitty -d ~ --title "floating-kitty" --override initial_window_width=100c --override initial_window_height=50c'''
 
-cmd-tab = 'exec-and-forget kitty -d ~ --title "floating-kitty" --override initial_window_width=100c --override initial_window_height=50c'
-
 # 'service' binding mode declaration.
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
 [mode.service.binding]
@@ -221,11 +219,16 @@ alt-shift-l = ['join-with right', 'mode main']
 3 = 'main'
 4 = 'main'
 5 = 'main'
-6 = ['secondary', 'main']
-7 = ['secondary', 'main']
-8 = ['secondary', 'main']
-9 = ['secondary', 'main']
-0 = ['secondary', 'main']
+# 6 = ['secondary', 'main']
+# 7 = ['secondary', 'main']
+# 8 = ['secondary', 'main']
+# 9 = ['secondary', 'main']
+# 0 = ['secondary', 'main']
+6 = ['secondary']
+7 = ['secondary']
+8 = ['secondary']
+9 = ['secondary']
+0 = ['secondary']
 
 [[on-window-detected]]
 if.app-id = 'com.google.Chrome'
