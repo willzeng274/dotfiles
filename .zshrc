@@ -414,3 +414,30 @@ alias gcloud='_load_gcloud && gcloud "$@"'
 alias gsutil='_load_gcloud && gsutil "$@"'
 alias bq='_load_gcloud && bq "$@"'
 eval "$(/Users/user/.local/bin/mise activate zsh)"
+
+ncmsg() {
+  if [ "$#" -ne 3 ]; then
+    echo "Usage: ncmsg <message> <ip> <port>"
+    return 1
+  fi
+
+  local message="$1"
+  local ip="$2"
+  local port="$3"
+
+  echo "$message" | nc "$ip" "$port"
+}
+
+slack() {
+    secret=$(pass totp/slack)
+    oathtool --totp -b "$secret"
+}
+
+github() {
+    secret=$(pass totp/github)
+    oathtool --totp -b "$secret"
+}
+
+ip() {
+    ipconfig getifaddr en0
+}

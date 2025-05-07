@@ -5,6 +5,7 @@
 *
 
 # very important
+!README.md
 !.gitignore
 !.zshrc
 !.zsh_plugins.txt
@@ -17,8 +18,12 @@
 
 !.config/kitty/
 !.config/aerospace/
+!.config/sketchybar/
+!.config/borders/
 !.gnupg/gpg-agent.conf
 !.gnupg/common.conf
 
 !.config/kitty/**
 !.config/aerospace/**
+!.config/sketchybar/**
+!.config/borders/**
