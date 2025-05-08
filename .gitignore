@@ -19,6 +19,7 @@
 !.config/kitty/
 !.config/aerospace/
 !.config/sketchybar/
+!.config/yazi/
 !.config/borders/
 !.gnupg/gpg-agent.conf
 !.gnupg/common.conf
@@ -26,4 +27,5 @@
 !.config/kitty/**
 !.config/aerospace/**
 !.config/sketchybar/**
+!.config/yazi/**
 !.config/borders/**
