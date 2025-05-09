@@ -2,7 +2,7 @@
 
 bar=(
   position=top
-  height=30
+  height=35
   blur_radius=30
   color="$BAR_COLOR"
 )

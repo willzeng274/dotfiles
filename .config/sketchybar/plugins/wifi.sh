@@ -1,4 +1,12 @@
 #!/bin/bash
 
-sketchybar --set "$NAME" \
-  label="$INFO"
+IP="$(ipconfig getsummary en0 | grep -o "yiaddr = .*" | sed 's/^yiaddr = //')"
+
+ICON=􀙈
+HIGHLIGHT=on
+if [ -n "$IP" ]; then
+    ICON=􀙇
+    HIGHLIGHT=off
+fi
+
+sketchybar --set $NAME icon=$ICON
