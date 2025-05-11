@@ -65,11 +65,11 @@ preset = 'qwerty'
 #                 Monitor pattern is the same as for 'workspace-to-monitor-force-assignment'.
 #                 See: https://nikitabobko.github.io/AeroSpace/guide#assign-workspaces-to-monitors
 [gaps]
-inner.horizontal = 10
-inner.vertical =   10 
+inner.horizontal = 12
+inner.vertical =   12
 outer.left =       10 
 outer.bottom =     10
-outer.top =        10
+outer.top =        [{ monitor.main = 10 }, { monitor.secondary = 42 }, 10]
 outer.right =      10
 
 # 'main' binding mode declaration
@@ -150,7 +150,7 @@ alt-o = 'workspace O'
 alt-p = 'workspace P'
 alt-q = 'workspace Q'
 alt-r = 'workspace R'	# Used for resume + kitty
-# alt-s = 'workspace S' # Commented out because option-s is used for siri
+alt-s = 'workspace S'
 alt-t = 'workspace T'	# Used for kitty terminal
 alt-u = 'workspace U'	# Used for notion
 alt-v = 'workspace V'	# Used for chatgpt
@@ -184,7 +184,7 @@ alt-shift-o = 'move-node-to-workspace O'
 alt-shift-p = 'move-node-to-workspace P'
 alt-shift-q = 'move-node-to-workspace Q'
 alt-shift-r = 'move-node-to-workspace R'
-# alt-shift-s = 'move-node-to-workspace S'	# Inaccessible
+alt-shift-s = 'move-node-to-workspace S'
 alt-shift-t = 'move-node-to-workspace T'
 alt-shift-u = 'move-node-to-workspace U'
 alt-shift-v = 'move-node-to-workspace V'
@@ -273,6 +273,10 @@ run = 'layout floating'
 [[on-window-detected]]
 if.app-id = 'com.apple.iCal'
 run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'com.tinyspeck.slackmacgap'
+run = 'move-node-to-workspace S'
 
 # removed because the alt+c window is getting moved to V as well
 # [[on-window-detected]]
