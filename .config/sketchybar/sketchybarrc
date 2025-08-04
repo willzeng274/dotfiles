@@ -11,7 +11,7 @@ source "$CONFIG_DIR/defaults.sh"
 source "$ITEM_DIR/spaces.sh"
 source "$ITEM_DIR/front_app.sh"
 
-source "$ITEM_DIR/music.sh"
+# source "$ITEM_DIR/music.sh"
 
 # source "$ITEM_DIR/cron.sh"
 source "$ITEM_DIR/calendar.sh"

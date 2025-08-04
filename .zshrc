@@ -151,7 +151,7 @@ starwars() {
 }
 
 venv() {
-    source venv/bin/activate
+    source .venv/bin/activate
 }
 
 ff() {
@@ -265,45 +265,14 @@ bunx() {
     command bunx "$@"
 }
 
-
-# Load nvm lazily
-export NVM_DIR="$HOME/.nvm"
-
-# Load nvm lazily
-export NVM_DIR="$HOME/.nvm"
-_load_nvm() {
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-  # Unalias nvm and node/npm if they exist to avoid recursion
-  unalias nvm 2>/dev/null
-  unalias node 2>/dev/null
-  unalias npm 2>/dev/null
-  # Add nvm's detected Node version to the PATH
-  export PATH="$NVM_BIN:$PATH"
-}
-
-# Create function wrappers instead of simple aliases to properly handle arguments
-nvm() {
-  _load_nvm
-  command nvm "$@"
-}
-
-node() {
-  _load_nvm
-  command node "$@"
-}
-
-npm() {
-  _load_nvm
-  command npm "$@"
-}
-
 eval "$(zoxide init zsh)"
 
+export PATH="/opt/homebrew/bin:$PATH"
 export PATH="/opt/homebrew/opt/gcc/bin:$PATH"
 export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
 export PATH="$HOME/.gem/bin:$PATH"
 export PATH="$HOME/flutter/bin:$PATH"
+export PATH="/Users/user/.bun/bin/:$PATH"
 export EDITOR=nvim
 export CXXFLAGS="-std=c++11"
 export GPG_TTY=$TTY
@@ -438,6 +407,11 @@ github() {
     oathtool --totp -b "$secret"
 }
 
+wzengdev() {
+    secret=$(pass totp/wzengdev)
+    oathtool --totp -b "$secret"
+}
+
 ip() {
     ipconfig getifaddr en0
 }
@@ -450,3 +424,24 @@ function y() {
 	fi
 	rm -f -- "$tmp"
 }
+
+# fnm
+eval "$(fnm env)"
+# FNM_PATH="/Users/user/Library/Application Support/fnm"
+# if [ -d "$FNM_PATH" ]; then
+#   export PATH="/Users/user/Library/Application Support/fnm:$PATH"
+#   eval "$(fnm env)"
+# fi
+
+# bun completions
+[ -s "/Users/user/.bun/_bun" ] && source "/Users/user/.bun/_bun"
+
+[[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
+
+# pnpm
+export PNPM_HOME="/Users/user/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end

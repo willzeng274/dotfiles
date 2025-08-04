@@ -157,7 +157,7 @@ alt-v = 'workspace V'	# Used for chatgpt
 alt-w = 'workspace W'
 alt-x = 'workspace X'
 alt-y = 'workspace Y'
-alt-z = 'workspace Z'	# Used for zoom
+alt-z = 'workspace Z'	# Used for Spotify 
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
 alt-shift-1 = 'move-node-to-workspace 1'
@@ -275,8 +275,18 @@ if.app-id = 'com.apple.iCal'
 run = 'layout floating'
 
 [[on-window-detected]]
+if.app-id = 'cc.ffitch.shottr'
+run = 'layout floating'
+
+[[on-window-detected]]
 if.app-id = 'com.tinyspeck.slackmacgap'
 run = 'move-node-to-workspace S'
+
+[[on-window-detected]]
+# Spotify
+if.app-id = 'com.spotify.client'
+run = 'move-node-to-workspace Z'
+
 
 # removed because the alt+c window is getting moved to V as well
 # [[on-window-detected]]

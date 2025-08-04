@@ -3,17 +3,19 @@
 font_family JetBrains Mono
 # font_size 11.0
 font_size 15.0
-# background #000000
+
+background #000000
 background_opacity 1.0
 background_image ~/Downloads/monterey.png
 background_image_layout scaled
 background_tint 0.90
-# foreground #feffff
-# background #000000
+
+foreground #feffff
+background #000000
 color_bold #bababa
 color_link #4d8ce7
-# selection_foreground #000000
-# selection_background #bad5fb
+selection_foreground #000000
+selection_background #bad5fb
 find_foreground #000000
 find_background #fefb51
 
@@ -2679,9 +2681,3 @@ map ctrl+f2 detach_window ask
 #: }}}
 
 #: }}}
-
-
-# BEGIN_KITTY_THEME
-# Adwaita darker
-include current-theme.conf
-# END_KITTY_THEME
