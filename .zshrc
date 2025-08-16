@@ -65,25 +65,16 @@ if ! command -v brew &> /dev/null; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-resume_() {
-    folder_name=$(basename "$PWD")
-    cp ~/Desktop/resumes/loo/new/resume_general.tex ./resume_"$folder_name".tex
-    open .
-    osascript -e 'tell application "iTerm2" to tell current window to close the current session'
-}
-
 resume() {
     folder_name=$(basename "$PWD")
     target_file="./resume_${folder_name}.tex"
-
     if [ -f "$target_file" ]; then
         echo "File $target_file already exists. Do you want to overwrite it? (y/n): "
         read choice
         case "$choice" in
             [Yy]* )
                 echo "Overwriting file..."
-                cp ~/Desktop/resumes/loo/new/resume_general.tex "$target_file"
-                nvim "$target_file"
+                cp ~/Desktop/resumes/templates/general/resume_general.tex "$target_file"
                 ;;
             [Nn]* )
                 echo "Exiting without making changes."
@@ -96,41 +87,100 @@ resume() {
         esac
     else
         cp ~/Desktop/resumes/templates/general/resume_general.tex "$target_file"
-        nvim "$target_file"
     fi
+
+    echo "External application? (y/n): "
+    read external_choice
+    case "$external_choice" in
+        [Yy]* )
+            skills_start=$(awk '/^\\section\{Technical Skills\}/ {print NR; exit}' "$target_file")
+            skills_end=$(awk -v start="$skills_start" 'NR > start && /^\\end\{itemize\}/ {print NR+1; exit}' "$target_file")
+            
+            education_start=$(awk '/^\\section\{Education\}/ {print NR; exit}' "$target_file")
+            education_end=$(awk -v start="$education_start" 'NR > start && /^\\resumeSubHeadingListEnd/ {print NR+1; exit}' "$target_file")
+            
+            echo "Technical Skills: lines $skills_start to $skills_end"
+            echo "Education: lines $education_start to $education_end"
+            echo
+            
+            temp_skills=$(mktemp)
+            temp_education=$(mktemp)
+            
+            sed -n "${skills_start},${skills_end}p" "$target_file" > "$temp_skills"
+            sed -n "${education_start},${education_end}p" "$target_file" > "$temp_education"
+            
+            echo "Technical Skills content:"
+            cat "$temp_skills"
+            echo
+            
+            echo "Education content:"  
+            cat "$temp_education"
+            echo
+            
+            temp_result=$(mktemp)
+            
+            if [[ $skills_start -lt $education_start ]]; then
+                sed -n "1,$((skills_start-1))p" "$target_file" > "$temp_result"
+                cat "$temp_education" >> "$temp_result"
+                sed -n "$((skills_end+1)),$((education_start-1))p" "$target_file" >> "$temp_result"
+                cat "$temp_skills" >> "$temp_result"
+                sed -n "$((education_end+1)),\$p" "$target_file" >> "$temp_result"
+            else
+                echo "Education comes first, Technical Skills second - swapping..."
+                sed -n "1,$((education_start-1))p" "$target_file" > "$temp_result"
+                cat "$temp_skills" >> "$temp_result"
+                sed -n "$((education_end+1)),$((skills_start-1))p" "$target_file" >> "$temp_result"
+                cat "$temp_education" >> "$temp_result"
+                sed -n "$((skills_end+1)),\$p" "$target_file" >> "$temp_result"
+            fi
+            
+            mv "$temp_result" "$target_file"
+
+            rm "$temp_skills" "$temp_education"
+            
+            echo "Section order swapped. File updated: $target_file"
+            ;;
+        [Nn]* )
+            echo "Keeping original"
+            ;;
+        * )
+            echo "Invalid input. Keeping original order."
+            ;;
+    esac
+
+    nvim "$target_file"
 }
 
-rangercd() {
-  local IFS=$'\t\n'
-  local tempfile=$(mktemp -t tmp.XXXXXX)
-  local ranger_cmd=(
-    command
-    ranger
-    --cmd="map Q chain shell echo %d > \"$tempfile\"; quitall"
-  )
-
-  "${ranger_cmd[@]}" "$@"
-  if [[ -f "$tempfile" ]] && [[ "$(cat -- "$tempfile")" != "$(pwd)" ]]; then
-    cd -- "$(cat "$tempfile")" || return
-  fi
-  command rm -f -- "$tempfile" 2>/dev/null
-}
-
-alias ranger="rangercd"
+# rangercd() {
+#   local IFS=$'\t\n'
+#   local tempfile=$(mktemp -t tmp.XXXXXX)
+#   local ranger_cmd=(
+#     command
+#     ranger
+#     --cmd="map Q chain shell echo %d > \"$tempfile\"; quitall"
+#   )
+#
+#   "${ranger_cmd[@]}" "$@"
+#   if [[ -f "$tempfile" ]] && [[ "$(cat -- "$tempfile")" != "$(pwd)" ]]; then
+#     cd -- "$(cat "$tempfile")" || return
+#   fi
+#   command rm -f -- "$tempfile" 2>/dev/null
+# }
+#
+# alias ranger="rangercd"
 
 title() {
     if [[ -n "$1" ]]; then
         echo -ne "\033]0;$1\a"
-        AUTO_UPDATE_TAB_TITLE=false  # Disable auto-updates
+        AUTO_UPDATE_TAB_TITLE=false
     else
-        # If no argument, restore automatic updates and use the current directory
         AUTO_UPDATE_TAB_TITLE=true
         echo -ne "\033]0;${PWD/#$HOME/~}\a"
     fi
 }
 
 useless() {
-    echo "mvf mvp venv cpy mkdircd pastefile resume resume_ rangercd watch_resume termpdf ff"
+    echo "mvf mvp venv cpy mkdircd pastefile resume watch_resume termpdf ff"
     echo "howdoi eza ranger htop btop tty-clock bat delta fuck tldr"
     echo "dotacat lolcat sl hollywood cowsay cowthink fortune asciiquarium cmatrix nethack chara say ponysay starwars aafire rig cbonsai cava gti"
     echo "cowsay -f"
@@ -156,11 +206,6 @@ venv() {
 
 ff() {
     aerospace list-windows --all | fzf --bind 'enter:execute(bash -c "aerospace focus --window-id {1}")+abort'
-}
-
-# useless but in case I forget pbcopy exists
-cpy() {
-    xargs | pbcopy
 }
 
 mkdircd() {
@@ -356,9 +401,6 @@ condainit() {
 . "$HOME/.atuin/bin/env"
 eval "$(atuin init zsh)"
 
-# Added by Windsurf
-export PATH="/Users/user/.codeium/windsurf/bin:$PATH"
-
 # Lazy-load Google Cloud SDK
 # The paths to Google Cloud SDK initialization files
 gcloud_path_zsh_inc='/Users/user/google-cloud-sdk/path.zsh.inc'
@@ -378,7 +420,6 @@ _load_gcloud() {
   unalias gcloud gsutil bq 2>/dev/null
 }
 
-# Create aliases for common Google Cloud commands
 alias gcloud='_load_gcloud && gcloud "$@"'
 alias gsutil='_load_gcloud && gsutil "$@"'
 alias bq='_load_gcloud && bq "$@"'
