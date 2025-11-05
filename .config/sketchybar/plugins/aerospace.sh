@@ -5,15 +5,28 @@
 source "$CONFIG_DIR/colors.sh"
 
 WORKSPACE_NAME="$1" # The workspace name this script instance is for
-MONITOR_ID="$2"   # The monitor ID this workspace item is assigned to (1-based appkit ID)
+# NOTE: $2 (MONITOR_ID) is ignored - we dynamically query the current monitor for this workspace
 
-# Get the workspace that is currently visible on THIS item's specific monitor
-# This should return a single workspace name if a monitor shows one workspace at a time.
-VISIBLE_WORKSPACE_ON_MONITOR=$(aerospace list-workspaces --monitor "$MONITOR_ID" --visible --format "%{workspace}")
-
+# Check if this workspace is currently visible on any monitor
 IS_THIS_WORKSPACE_VISIBLE_ON_ITS_MONITOR=false
-# Check if VISIBLE_WORKSPACE_ON_MONITOR is not empty and matches WORKSPACE_NAME
-if [[ -n "$VISIBLE_WORKSPACE_ON_MONITOR" && "$WORKSPACE_NAME" == "$VISIBLE_WORKSPACE_ON_MONITOR" ]]; then
+
+# Get all visible workspaces across all monitors
+# Query each monitor for its visible workspace
+VISIBLE_WORKSPACES=""
+MONITOR_LIST=$(aerospace list-monitors 2>/dev/null)
+while IFS= read -r line; do
+  monitor_id=$(echo "$line" | cut -d'|' -f1 | xargs)
+  if [[ -n "$monitor_id" ]]; then
+    # Redirect stdin from /dev/null to prevent aerospace from consuming the while loop's stdin
+    visible_ws=$(aerospace list-workspaces --monitor "$monitor_id" --visible < /dev/null 2>/dev/null)
+    if [[ -n "$visible_ws" ]]; then
+      VISIBLE_WORKSPACES+="$visible_ws"$'\n'
+    fi
+  fi
+done <<< "$MONITOR_LIST"
+
+# Check if our workspace is in the list of visible workspaces
+if echo "$VISIBLE_WORKSPACES" | grep -q "^${WORKSPACE_NAME}$"; then
   IS_THIS_WORKSPACE_VISIBLE_ON_ITS_MONITOR=true
 fi
 
@@ -37,6 +50,14 @@ if [ "$SENDER" == "mouse.exited" ]; then
       background.color="$TRANSPARENT"
   fi
   exit 0
+fi
+
+# Handle display changes and system wake events
+# When monitors are connected/disconnected or system wakes, we need to refresh
+# These events don't need special handling - just fall through to update the display
+if [ "$SENDER" == "display_change" ] || [ "$SENDER" == "system_woke" ]; then
+  # Fall through to the main update logic below
+  :
 fi
 
 # App icon fetching logic

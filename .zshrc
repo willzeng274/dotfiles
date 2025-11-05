@@ -314,12 +314,19 @@ eval "$(zoxide init zsh)"
 
 export PATH="/opt/homebrew/bin:$PATH"
 export PATH="/opt/homebrew/opt/gcc/bin:$PATH"
+
+g++() {
+    local SDKROOT
+    SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
+    command /opt/homebrew/bin/g++ -isystem "$SDKROOT/usr/include" "$@"
+}
+
 export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
 export PATH="$HOME/.gem/bin:$PATH"
 export PATH="$HOME/flutter/bin:$PATH"
 export PATH="/Users/user/.bun/bin/:$PATH"
 export EDITOR=nvim
-export CXXFLAGS="-std=c++11"
+export CXXFLAGS="-std=c++17"
 export GPG_TTY=$TTY
 
 alias skim='/Applications/Skim.app/Contents/MacOS/Skim'
@@ -448,10 +455,22 @@ github() {
     oathtool --totp -b "$secret"
 }
 
+
+github2() {
+    secret=$(pass totp/pullstack)
+    oathtool --totp -b "$secret"
+}
+
 wzengdev() {
     secret=$(pass totp/wzengdev)
     oathtool --totp -b "$secret"
 }
+
+discord() {
+    secret=$(pass totp/discord)
+    oathtool --totp -b "$secret"
+}
+
 
 ip() {
     ipconfig getifaddr en0
@@ -486,3 +505,99 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
+
+
+function gh_comments() {
+  local GREEN="\033[0;32m"
+  local BLUE="\033[0;34m"
+  local CYAN="\033[0;36m"
+  local RESET="\033[0m"
+  
+  local SHOW_UNRESOLVED_ONLY=false
+  
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -u|--unresolved)
+        SHOW_UNRESOLVED_ONLY=true
+        shift
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
+  if [[ -z "$1" || -z "$2" ]]; then
+    echo "Usage: gh_comments [-u|--unresolved] <owner/repo> <pr_number>"
+    echo "  -u, --unresolved    Show only unresolved comments"
+    return 1
+  fi
+
+  if [[ "$SHOW_UNRESOLVED_ONLY" == true ]]; then
+    local OWNER=$(echo $1 | cut -d'/' -f1)
+    local REPO=$(echo $1 | cut -d'/' -f2)
+    local PR_NUMBER=$2
+    
+    gh api graphql -f query="
+      query {
+        repository(owner: \"$OWNER\", name: \"$REPO\") {
+          pullRequest(number: $PR_NUMBER) {
+            title
+            reviewThreads(first: 100) {
+              nodes {
+                isResolved
+                path
+                line
+                originalLine
+                startLine
+                comments(first: 100) {
+                  nodes {
+                    author {
+                      login
+                    }
+                    body
+                    createdAt
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    " | jq -r '
+      .data.repository.pullRequest.reviewThreads.nodes[] |
+      select(.isResolved == false) |
+      "File: " + .path + "\n" +
+      (if .line then "Line: " + (.line | tostring) + "\n" 
+       elif .originalLine then "Line: " + (.originalLine | tostring) + "\n"
+       elif .startLine then "Line: " + (.startLine | tostring) + "\n"
+       else "" end) +
+      (.comments.nodes[] | "Comment by " + .author.login + " at " + .createdAt + ":\n" + .body + "\n---")
+    ' |
+    while IFS= read -r line; do
+      if [[ $line == File:* ]]; then
+        echo -e "${GREEN}${line}${RESET}"
+      elif [[ $line == Line:* ]]; then
+        echo -e "${BLUE}${line}${RESET}"
+      elif [[ $line == Comment\ by* ]]; then
+        echo -e "${CYAN}${line}${RESET}"
+      else
+        echo -e "$line"
+      fi
+    done
+  else
+    gh api "repos/$1/pulls/$2/comments" | jq -r '.[] | "File: \(.path)\nLine: \(.line // .original_line)\nComment by \(.user.login):\n\(.body)\n---"' |
+    while IFS= read -r line; do
+      if [[ $line == File:* ]]; then
+        echo -e "${GREEN}${line}${RESET}"
+      elif [[ $line == Line:* ]]; then
+        echo -e "${BLUE}${line}${RESET}"
+      elif [[ $line == Comment\ by* ]]; then
+        echo -e "${CYAN}${line}${RESET}"
+      else
+        echo -e "$line"
+      fi
+    done
+  fi
+}
+

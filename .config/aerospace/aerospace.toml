@@ -287,6 +287,10 @@ run = 'move-node-to-workspace S'
 if.app-id = 'com.spotify.client'
 run = 'move-node-to-workspace Z'
 
+[[on-window-detected]]
+if.app-id = 'com.googlecode.iterm2'
+run = 'layout floating'
+
 
 # removed because the alt+c window is getting moved to V as well
 # [[on-window-detected]]
