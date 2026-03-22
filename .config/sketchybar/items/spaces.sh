@@ -19,7 +19,7 @@ aerospace list-workspaces --all --format "%{workspace}%{tab}%{monitor-appkit-nss
   fi
 
   sketchybar --add item space."$sid" left \
-    --subscribe space."$sid" aerospace_workspace_change display_change system_woke mouse.entered mouse.exited \
+    --subscribe space."$sid" aerospace_workspace_change aerospace_window_change front_app_switched display_change system_woke mouse.entered mouse.exited \
     --set space."$sid" \
     display="$monitor_display_id" \
     padding_right=0 \

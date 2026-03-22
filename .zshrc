@@ -1,8 +1,8 @@
 HISTFILE=~/.zsh_history
 
-HISTSIZE=10000
+HISTSIZE=100000
 
-SAVEHIST=10000
+SAVEHIST=100000
 
 setopt EXTENDED_HISTORY
 
@@ -432,6 +432,8 @@ alias gsutil='_load_gcloud && gsutil "$@"'
 alias bq='_load_gcloud && bq "$@"'
 eval "$(/Users/user/.local/bin/mise activate zsh)"
 
+alias lg="lazygit"
+
 ncmsg() {
   if [ "$#" -ne 3 ]; then
     echo "Usage: ncmsg <message> <ip> <port>"
@@ -445,31 +447,35 @@ ncmsg() {
   echo "$message" | nc "$ip" "$port"
 }
 
-slack() {
-    secret=$(pass totp/slack)
+totp() {
+    local name="$1"
+
+    if [[ -z "$name" ]]; then
+        echo "Usage: totp <name>" >&2
+        return 1
+    fi
+
+    local secret
+    secret=$(pass "totp/$name") || return 1
     oathtool --totp -b "$secret"
 }
 
-github() {
-    secret=$(pass totp/github)
-    oathtool --totp -b "$secret"
+_totp() {
+    local store dir
+    store="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
+    dir="$store/totp"
+
+    [[ -d "$dir" ]] || return 0
+
+    local -a files entries
+    files=("$dir"/**/*.gpg(N))
+    entries=("${files[@]#$dir/}")
+    entries=("${entries[@]%.gpg}")
+
+    compadd -- "${entries[@]}"
 }
 
-
-github2() {
-    secret=$(pass totp/pullstack)
-    oathtool --totp -b "$secret"
-}
-
-wzengdev() {
-    secret=$(pass totp/wzengdev)
-    oathtool --totp -b "$secret"
-}
-
-discord() {
-    secret=$(pass totp/discord)
-    oathtool --totp -b "$secret"
-}
+compdef _totp totp
 
 
 ip() {
@@ -506,6 +512,8 @@ case ":$PATH:" in
 esac
 # pnpm end
 
+export GOPATH=$HOME/go
+export PATH=$GOPATH/bin:$PATH
 
 function gh_comments() {
   local GREEN="\033[0;32m"
@@ -601,3 +609,24 @@ function gh_comments() {
   fi
 }
 
+create_commits() {
+    local date=$1
+    local count=$2
+    
+    echo "Creating $count commits for $date..."
+    
+    for i in $(seq 1 $count); do
+        echo "Commit $i on $date" >> contributions.txt
+        git add contributions.txt
+        
+        GIT_AUTHOR_DATE="$date 12:00:00" GIT_COMMITTER_DATE="$date 12:00:00" \
+        git commit -m "Contribution $i on $date"
+    done
+}
+
+qr() {
+    pngpaste /tmp/clip.png && zbarimg --quiet --raw /tmp/clip.png
+}
+
+# OpenClaw Completion
+source "/Users/user/.openclaw/completions/openclaw.zsh"
