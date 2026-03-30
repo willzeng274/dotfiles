@@ -21,10 +21,11 @@ while IFS=$'\t' read -r ws visible focused mid; do
     [[ "$focused" == "true" ]] && focused_ws="$ws"
 done < <(aerospace list-workspaces --all --format "%{workspace}%{tab}%{workspace-is-visible}%{tab}%{workspace-is-focused}%{tab}%{monitor-appkit-nsscreen-screens-id}" 2>/dev/null)
 
-# Write state for hover script
+# Write state for hover script (no subshells)
 printf '%s\n' "$focused_ws" > "$CACHE_DIR/focused"
-printf '%s\n' "${!WS_VISIBLE[@]}" | tr ' ' '\n' | while read -r ws; do
-    [[ "${WS_VISIBLE[$ws]}" == "true" ]] && echo "$ws"
+: > "$CACHE_DIR/visible"
+for ws in "${!WS_VISIBLE[@]}"; do
+    [[ "${WS_VISIBLE[$ws]}" == "true" ]] && printf '%s\n' "$ws"
 done > "$CACHE_DIR/visible"
 
 # Call 2: app icons per workspace
@@ -45,6 +46,12 @@ focused_item=""
 for sid in "${!WS_VISIBLE[@]}"; do
     icons="${WS_ICONS[$sid]}"
     icons="${icons%  }"
+    display="${WS_MONITOR[$sid]:-1}"
+
+    # Update display assignment only on monitor change
+    if [[ "$SENDER" == "aerospace_monitor_change" || "$SENDER" == "display_change" ]]; then
+        args+=(--set "space.$sid" display="$display")
+    fi
 
     if [[ "${WS_FOCUSED[$sid]}" == "true" ]]; then
         args+=(--set "space.$sid"
