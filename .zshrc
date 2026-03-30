@@ -630,3 +630,7 @@ qr() {
 
 # OpenClaw Completion
 source "/Users/user/.openclaw/completions/openclaw.zsh"
+
+source ~/.swiftly/env.sh
+
+alias cc="claude --allow-dangerously-skip-permissions"

@@ -8,20 +8,24 @@ sketchybar --add item aerospace_mode left \
   icon.padding_left=4 \
   drawing=off
 
-# Use a pipe and while read loop for robustness with workspace names and to get monitor IDs
+sketchybar --add event aerospace_workspace_change
+sketchybar --add event aerospace_window_change
+sketchybar --add event aerospace_monitor_change
+
+# Create workspace items — default to drawing=off to avoid flash on reload.
+# The controller script will show the correct ones immediately after.
 aerospace list-workspaces --all --format "%{workspace}%{tab}%{monitor-appkit-nsscreen-screens-id}" | while IFS=$'\t' read -r sid monitor_appkit_id; do
-  # If monitor_appkit_id is empty or zero, default to "1" (main display for SketchyBar)
-  # AeroSpace's monitor-appkit-nsscreen-screens-id is 1-based.
   if [[ -z "$monitor_appkit_id" || "$monitor_appkit_id" == "0" ]]; then
-    monitor_display_id="1" # Fallback, though appkit IDs should be valid and 1-based
+    monitor_display_id="1"
   else
     monitor_display_id="$monitor_appkit_id"
   fi
 
   sketchybar --add item space."$sid" left \
-    --subscribe space."$sid" aerospace_workspace_change aerospace_window_change front_app_switched display_change system_woke mouse.entered mouse.exited \
+    --subscribe space."$sid" mouse.entered mouse.exited \
     --set space."$sid" \
     display="$monitor_display_id" \
+    drawing=off \
     padding_right=0 \
     icon="$sid" \
     label.padding_right=7 \
@@ -36,8 +40,15 @@ aerospace list-workspaces --all --format "%{workspace}%{tab}%{monitor-appkit-nss
     background.height=25 \
     label.drawing=on \
     click_script="aerospace workspace \"$sid\"" \
-    script="$CONFIG_DIR/plugins/aerospace.sh \"$sid\" \"$monitor_display_id\""
+    script="$CONFIG_DIR/plugins/aerospace_hover.sh"
 done
+
+# Single controller: handles all heavy events in one batched call
+sketchybar --add item aerospace_controller left \
+  --subscribe aerospace_controller aerospace_workspace_change aerospace_window_change front_app_switched display_change system_woke aerospace_monitor_change \
+  --set aerospace_controller \
+  drawing=off \
+  script="$CONFIG_DIR/plugins/aerospace.sh"
 
 sketchybar --add item space_separator left \
   --set space_separator icon="|" \
@@ -46,4 +57,3 @@ sketchybar --add item space_separator left \
   icon.padding_right=7 \
   label.drawing=off \
   background.drawing=off
-

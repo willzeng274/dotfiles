@@ -1,120 +1,110 @@
 #!/usr/bin/env bash
 
-# make sure it's executable with:
-# chmod +x ~/.config/sketchybar/plugins/aerospace.sh
+# Single controller: 2 aerospace calls total.
+# Updates ALL workspace items + moves status items to focused monitor
+# in one batched sketchybar IPC call.
+
 source "$CONFIG_DIR/colors.sh"
 
-WORKSPACE_NAME="$1" # The workspace name this script instance is for
+CACHE_DIR="/tmp/sketchybar-aerospace"
+mkdir -p "$CACHE_DIR"
 
-# Fast path for hover events — avoid the expensive multi-monitor loop entirely.
-# Use a single `--monitor focused --visible` call instead.
-if [ "$SENDER" == "mouse.entered" ]; then
-  FOCUSED_WS=$(aerospace list-workspaces --monitor focused --visible 2>/dev/null | head -1 | tr -d '[:space:]')
-  if [ "$WORKSPACE_NAME" != "$FOCUSED_WS" ]; then
-    sketchybar --set "$NAME" \
-      background.drawing=on \
-      label.color="$BACKGROUND" \
-      icon.color="$BACKGROUND" \
-      background.color="$ACCENT_COLOR"
-  fi
-  exit 0
-fi
+# --- 2 aerospace calls total ---
 
-if [ "$SENDER" == "mouse.exited" ]; then
-  FOCUSED_WS=$(aerospace list-workspaces --monitor focused --visible 2>/dev/null | head -1 | tr -d '[:space:]')
-  if [ "$WORKSPACE_NAME" != "$FOCUSED_WS" ]; then
-    sketchybar --set "$NAME" \
-      background.drawing=off \
-      label.color="$ACCENT_COLOR" \
-      icon.color="$ACCENT_COLOR" \
-      background.color="$TRANSPARENT"
-  fi
-  exit 0
-fi
+# Call 1: all workspace metadata in one shot
+declare -A WS_VISIBLE WS_FOCUSED WS_MONITOR
+focused_ws=""
+while IFS=$'\t' read -r ws visible focused mid; do
+    WS_VISIBLE["$ws"]="$visible"
+    WS_FOCUSED["$ws"]="$focused"
+    WS_MONITOR["$ws"]="$mid"
+    [[ "$focused" == "true" ]] && focused_ws="$ws"
+done < <(aerospace list-workspaces --all --format "%{workspace}%{tab}%{workspace-is-visible}%{tab}%{workspace-is-focused}%{tab}%{monitor-appkit-nsscreen-screens-id}" 2>/dev/null)
 
-# For window/app changes: only the focused workspace needs to refresh its icons.
-# All other spaces exit early — one fast check, no monitor loop.
-if [ "$SENDER" == "aerospace_window_change" ] || [ "$SENDER" == "front_app_switched" ]; then
-  FOCUSED_WS=$(aerospace list-workspaces --monitor focused --visible 2>/dev/null | head -1 | tr -d '[:space:]')
-  if [ "$WORKSPACE_NAME" != "$FOCUSED_WS" ]; then
-    exit 0
-  fi
-  # Refresh icons for this workspace only — visibility state hasn't changed
-  icons=""
-  APPS_INFO_TEXT=$(aerospace list-windows --workspace "$WORKSPACE_NAME" --json --format "%{app-name}")
-  IFS=$'\n'
-  for app_name in $(echo "$APPS_INFO_TEXT" | jq -r '.[]? | ."app-name"? // empty'); do
-    if [ -n "$app_name" ]; then
-      app_icon=$("$CONFIG_DIR/plugins/icon_map_fn.sh" "$app_name")
-      if [ -n "$app_icon" ]; then
-        icons+="$app_icon"
-        icons+="  "
-      fi
+# Write state for hover script
+printf '%s\n' "$focused_ws" > "$CACHE_DIR/focused"
+printf '%s\n' "${!WS_VISIBLE[@]}" | tr ' ' '\n' | while read -r ws; do
+    [[ "${WS_VISIBLE[$ws]}" == "true" ]] && echo "$ws"
+done > "$CACHE_DIR/visible"
+
+# Call 2: app icons per workspace
+declare -A WS_ICONS
+while IFS=$'\t' read -r ws app_name; do
+    icon=$("$CONFIG_DIR/plugins/icon_map_fn.sh" "$app_name")
+    [[ -n "$icon" ]] && WS_ICONS["$ws"]+="${icon}  "
+done < <(aerospace list-windows --all --format "%{workspace}%{tab}%{app-name}" 2>/dev/null)
+
+# --- Build one batched sketchybar command ---
+
+focused_monitor="${WS_MONITOR[$focused_ws]}"
+focused_display="${focused_monitor:-1}"
+
+args=()
+focused_item=""
+
+for sid in "${!WS_VISIBLE[@]}"; do
+    icons="${WS_ICONS[$sid]}"
+    icons="${icons%  }"
+
+    if [[ "${WS_FOCUSED[$sid]}" == "true" ]]; then
+        args+=(--set "space.$sid"
+            drawing=on
+            label="$icons"
+            label.color="$BACKGROUND"
+            icon.color="$BACKGROUND"
+            background.drawing=on
+            background.color="$ACCENT_COLOR"
+        )
+        focused_item="space.$sid"
+    elif [[ "${WS_MONITOR[$sid]}" != "$focused_monitor" ]]; then
+        # Unfocused monitor: muted with same visual hierarchy
+        if [[ "${WS_VISIBLE[$sid]}" == "true" ]]; then
+            # Active workspace on unfocused monitor: gray bg
+            args+=(--set "space.$sid"
+                drawing=on
+                label="$icons"
+                label.color=0xffcfcfcf
+                icon.color=0xffcfcfcf
+                background.drawing=on
+                background.color=0xff414550
+            )
+        elif [[ -n "$icons" ]]; then
+            # Has windows, not visible, unfocused monitor: gray text, no bg
+            args+=(--set "space.$sid"
+                drawing=on
+                label="$icons"
+                label.color=0xff888888
+                icon.color=0xff888888
+                background.drawing=off
+                background.color="$TRANSPARENT"
+            )
+        else
+            args+=(--set "space.$sid" drawing=off)
+        fi
+    elif [[ -n "$icons" ]]; then
+        # Focused monitor, has windows, not visible
+        args+=(--set "space.$sid"
+            drawing=on
+            label="$icons"
+            background.drawing=off
+            label.color="$ACCENT_COLOR"
+            icon.color="$ACCENT_COLOR"
+            background.color="$TRANSPARENT"
+        )
+    else
+        args+=(--set "space.$sid" drawing=off)
     fi
-  done
-  icons=$(echo -e "${icons}" | sed 's/[[:space:]]*$//')
-  sketchybar --set "$NAME" label="$icons" drawing=on background.drawing=on
-  exit 0
-fi
-
-# For all other events (workspace change, display change, system wake):
-# do the full multi-monitor visibility check.
-IS_THIS_WORKSPACE_VISIBLE_ON_ITS_MONITOR=false
-VISIBLE_WORKSPACES=""
-MONITOR_LIST=$(aerospace list-monitors 2>/dev/null)
-while IFS= read -r line; do
-  monitor_id=$(echo "$line" | cut -d'|' -f1 | xargs)
-  if [[ -n "$monitor_id" ]]; then
-    # Redirect stdin from /dev/null to prevent aerospace from consuming the while loop's stdin
-    visible_ws=$(aerospace list-workspaces --monitor "$monitor_id" --visible < /dev/null 2>/dev/null)
-    if [[ -n "$visible_ws" ]]; then
-      VISIBLE_WORKSPACES+="$visible_ws"$'\n'
-    fi
-  fi
-done <<< "$MONITOR_LIST"
-
-if echo "$VISIBLE_WORKSPACES" | grep -q "^${WORKSPACE_NAME}$"; then
-  IS_THIS_WORKSPACE_VISIBLE_ON_ITS_MONITOR=true
-fi
-
-# App icon fetching
-icons=""
-APPS_INFO_TEXT=$(aerospace list-windows --workspace "$WORKSPACE_NAME" --json --format "%{app-name}")
-
-IFS=$'\n'
-for app_name in $(echo "$APPS_INFO_TEXT" | jq -r '.[]? | ."app-name"? // empty'); do
-  if [ -n "$app_name" ]; then
-    app_icon=$("$CONFIG_DIR/plugins/icon_map_fn.sh" "$app_name")
-    if [ -n "$app_icon" ]; then
-      icons+="$app_icon"
-      icons+="  "
-    fi
-  fi
 done
-icons=$(echo -e "${icons}" | sed 's/[[:space:]]*$//')
 
-# Main drawing logic
-if [ "$IS_THIS_WORKSPACE_VISIBLE_ON_ITS_MONITOR" = "true" ]; then
-  # Set appearance and jump up, then animate back down — actual bounce
-  sketchybar --set "$NAME" \
-    y_offset=8 \
-    drawing=on \
-    label="$icons" \
-    label.color="$BACKGROUND" \
-    icon.color="$BACKGROUND" \
-    background.drawing=on \
-    background.color="$ACCENT_COLOR"
-  sketchybar --animate sin 10 --set "$NAME" y_offset=0
-else
-  if [ -z "$icons" ]; then
-    sketchybar --set "$NAME" drawing=off
-  else
-    sketchybar --set "$NAME" \
-      drawing=on \
-      label="$icons" \
-      background.drawing=off \
-      label.color="$ACCENT_COLOR" \
-      icon.color="$ACCENT_COLOR" \
-      background.color="$TRANSPARENT"
-  fi
+# Move all status items to the focused monitor's bar
+for item in front_app space_separator aerospace_mode calendar volume battery cpu ram wifi caffeinate; do
+    args+=(--set "$item" display="$focused_display")
+done
+
+[[ ${#args[@]} -gt 0 ]] && sketchybar "${args[@]}"
+
+# Bounce only on workspace switch
+if [[ -n "$focused_item" && "$SENDER" == "aerospace_workspace_change" ]]; then
+    sketchybar --set "$focused_item" y_offset=8 \
+               --animate sin 10 --set "$focused_item" y_offset=0
 fi

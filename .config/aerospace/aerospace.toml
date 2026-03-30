@@ -19,6 +19,8 @@ exec-on-workspace-change = ['/bin/bash', '-c',
 	'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE'
 ]
 
+on-monitor-changed = 'exec-and-forget sketchybar --trigger aerospace_monitor_change'
+
 # Start AeroSpace at login
 start-at-login = true 
 
@@ -45,7 +47,10 @@ default-root-container-orientation = 'auto'
 # See https://nikitabobko.github.io/AeroSpace/commands#move-mouse
 # Fallback value (if you omit the key): on-focused-monitor-changed = []
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
-on-focus-changed = ['move-mouse window-lazy-center', 'exec-and-forget sketchybar --trigger aerospace_window_change']
+on-focus-changed = 'move-mouse window-lazy-center'
+
+# Hover over a window to focus it (new feature from PR #1993)
+# focus-follows-mouse = true
 
 # You can effectively turn off macOS "Hide application" (cmd-h) feature by toggling this flag
 # Useful if you don't use this macOS feature, but accidentally hit cmd-h or cmd-alt-h key
@@ -146,6 +151,15 @@ alt-d = 'workspace D'
 alt-i = 'workspace I'
 # alt-m = 'workspace M'	# Used for aerospace workspace search
 # alt-n = 'workspace N'	# New chrome tab hotkey
+
+# ralt-* bindings for workspaces blocked by macOS alt-key shortcuts (new from PR #1714)
+ralt-a = 'workspace A'
+ralt-c = 'workspace C'
+ralt-e = 'workspace E'
+ralt-f = 'workspace F'
+ralt-g = 'workspace G'
+ralt-m = 'workspace M'
+ralt-n = 'workspace N'
 alt-o = 'workspace O'
 alt-p = 'workspace P'
 alt-q = 'workspace Q'
@@ -198,7 +212,7 @@ alt-shift-f = 'fullscreen'	# Because alt-f is used for finding
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
 # alt-tab = 'workspace-back-and-forth'
-alt-a = 'workspace-back-and-forth'
+lalt-a = 'workspace-back-and-forth'
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-workspace-to-monitor
 # alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
 alt-shift-a = 'move-workspace-to-monitor --wrap-around next'
